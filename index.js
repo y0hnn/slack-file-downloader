@@ -7,10 +7,11 @@ const Path = require("path");
 module.exports = options => {
   const defaultOptions = {
     path: "dataset/**/*.json",
-    concurrency: 6
+    concurrency: 6,
+    token: null
   };
   const finalOptions = { ...defaultOptions, ...options };
-  const { path, concurrency } = finalOptions;
+  const { path, concurrency, token } = finalOptions;
   const q = queue();
   q.concurrency = concurrency;
   q.autostart = true;
@@ -34,7 +35,7 @@ module.exports = options => {
                     fs.mkdirSync(dir);
                   }
                   q.push(() =>
-                    download(file.url_private_download, path_to_save)
+                    download(file.url_private_download, token, path_to_save)
                   );
                 }
               });
@@ -61,14 +62,15 @@ function readJsonFileAsync(filepath, callback) {
   });
 }
 
-async function download(url, path) {
+async function download(url, token, path) {
   console.log("Downloading : " + url);
 
   // axios image download with response type "stream"
   const response = await axios({
     method: "GET",
     url: url,
-    responseType: "stream"
+    responseType: "stream",
+    headers: token === null ? {} : {'Authorization': 'Bearer ' + token }
   });
 
   // pipe the result stream into a file on disc
